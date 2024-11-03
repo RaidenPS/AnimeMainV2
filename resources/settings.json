@@ -1,0 +1,38 @@
+{
+  "isDebug": true,
+  "isMaintenance": false,
+  "kcpInfo": {
+    "kcpInterval": 3,
+    "kcpTimeout": 30000,
+    "kcpMtu": 1400,
+    "kcpSndwnd": 256,
+    "kcpRcvwnd": 256,
+    "gateserverIP": "127.0.0.1",
+    "gateserverPort": 8882
+  },
+  "databaseInfo": {
+    "mongourl": "mongodb://localhost:27017",
+    "databasename": "raidenps",
+    "startPlayerCounterPosition": 100001
+  },
+  "maintenance": {
+    "start_time": 1726943028,
+    "end_time": 1787943028,
+	"message": "The private server is under maintenance. Check github for update!",
+	"url": "https://github.com/RaidenPS/"
+  },
+  "gameInfo": {
+    "isBeta": false,
+    "betaAccountIds": [],
+    "maxPlayers": 40,
+    "maxBetaPlayers": -1,
+    "forbiddenIPs": [],
+    "gameVersion": "OSRELWin5.0.0",
+    "gameRawVersion": "OSRELWin5.0.0_R26458901_S26368837_D26487341",
+    "enableSwitchCharacters": true,
+    "enableResources": false,
+    "enableQuests": false,
+    "chatCooldown": 2,
+    "reportCooldown": 30
+  }
+}

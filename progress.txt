@@ -1,0 +1,30 @@
+Game:
+
+
+Profile:
+[+] See Avatar pictures.
+
+
+[+] Edit Profile -> Namecard.
+[+] Edit Profile -> Show Character details.
+[+] Edit Profile -> Show Constellation level.
+[+] Change namecard.
+[+] Change birthday.
+[+] Edit nickname
+[+] Edit signature.
+
+Friends / My Friends:
+[+] Show FriendList, FriendRequests and blocklist.
+[+] Accept or deny a friend request.
+[+] Add player to blacklist.
+[+] Add player to friendlist.
+[+] Remove player from black list.
+[+] Remove player from friend list.
+[+] Search for players.
+[+] Send friend request.
+
+
+Chat:
+[+] Read chat history.
+[+] Send a message and emote.
+[+] Chat moderation and cooldown.
