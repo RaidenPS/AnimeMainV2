@@ -24,6 +24,7 @@ public class HandlerGetPlayerSocialDetailReq extends Packet {
         SocialDetail.Builder detail = session.getServer().getSocialInfoByUid(req.getUid());
         if (detail != null) {
             detail.setIsFriend(req.getUid() == UID || session.getPlayer().getFriendsList().isFriendsWith(req.getUid()));
+            detail.setIsInBlacklist(req.getUid() == UID || session.getPlayer().getFriendsList().isBlockedWith(req.getUid()));
             session.send(new PacketGetPlayerSocialDetailRsp(detail, PacketRetcodes.RETCODE_SUCC));
         }
         else {

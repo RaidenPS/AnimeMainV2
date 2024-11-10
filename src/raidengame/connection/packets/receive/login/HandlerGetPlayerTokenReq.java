@@ -100,7 +100,7 @@ public class HandlerGetPlayerTokenReq extends Packet {
         var player = DatabaseHelper.getPlayerByAccount(account, event.getPlayerClass());
         if (player == null) {
             player = event.getPlayerClass().getDeclaredConstructor(GameSession.class).newInstance(session);
-            DatabaseHelper.generatePlayerUid(player, 0);
+            DatabaseHelper.generatePlayerUid(player);
         }
 
         session.setPlayer(player);

@@ -15,6 +15,6 @@ public class HandlerAddBlacklistReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         AddBlacklistReq req = AddBlacklistReq.parseFrom(data);
-        session.getPlayer().getFriendsList().addBlockedPerson(req.getTargetUid());
+        session.getPlayer().getFriendsList().handlerAddBlockedPlayer(req.getTargetUid());
     }
 }

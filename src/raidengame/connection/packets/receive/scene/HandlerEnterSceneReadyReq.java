@@ -19,7 +19,13 @@ public class HandlerEnterSceneReadyReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         EnterSceneReadyReq req = EnterSceneReadyReq.parseFrom(data);
+        int sceneToken = req.getEnterSceneToken();
+        if(sceneToken != session.getPlayer().getEnterSceneToken()) {
+            session.send(new PacketEnterSceneReadyRsp(req.getEnterSceneToken(), PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID));
+            return;
+        }
+
         session.send(new PacketEnterScenePeerNotify(session.getPlayer()));
-        session.send(new PacketEnterSceneReadyRsp(req.getEnterSceneToken()));
+        session.send(new PacketEnterSceneReadyRsp(req.getEnterSceneToken(), PacketRetcodes.RETCODE_SUCC));
     }
 }

@@ -10,11 +10,20 @@ import raidengame.connection.packets.send.scene.PacketPostEnterSceneRsp;
 // Protocol buffers
 import raidengame.cache.protobuf.PostEnterSceneReqOuterClass.PostEnterSceneReq;
 
+/**
+ * Handler for send PostEnterSceneRsp.
+ */
 @PacketOpcode(PacketIds.PostEnterSceneReq)
-public class HandlerPostEnterSceneReq  extends Packet {
+public class HandlerPostEnterSceneReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         PostEnterSceneReq req = PostEnterSceneReq.parseFrom(data);
-        session.send(new PacketPostEnterSceneRsp(req.getEnterSceneToken()));
+        int sceneToken = req.getEnterSceneToken();
+        if(sceneToken != session.getPlayer().getEnterSceneToken()) {
+            session.send(new PacketPostEnterSceneRsp(sceneToken, PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID));
+            return;
+        }
+
+        session.send(new PacketPostEnterSceneRsp(sceneToken, PacketRetcodes.RETCODE_SUCC));
     }
 }
