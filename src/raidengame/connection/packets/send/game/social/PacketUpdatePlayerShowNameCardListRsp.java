@@ -18,8 +18,8 @@ public class PacketUpdatePlayerShowNameCardListRsp extends BasePacket {
 
         UpdatePlayerShowNameCardListRsp proto =
                 UpdatePlayerShowNameCardListRsp.newBuilder()
-                        .addAllShowNameCardIdList(nameCardIds)
                         .setRetcode(RETCODE_SUCC)
+                        .addAllShowNameCardIdList(nameCardIds)
                         .build();
 
         this.setData(proto);

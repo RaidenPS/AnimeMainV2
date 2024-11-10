@@ -18,7 +18,7 @@ public class PacketPrivateChatRsp extends BasePacket {
                 PrivateChatRsp.newBuilder()
                         .setRetcode(retcode)
                         .setChatForbiddenEndtime(restrict_time)
-                .build();
+                        .build();
 
         this.setData(proto);
     }

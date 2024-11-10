@@ -17,8 +17,8 @@ public class PacketPlayerGameKickRsp extends BasePacket {
 
         PlayerGameKickRsp proto =
                 PlayerGameKickRsp.newBuilder()
-                .setRetcode(RETCODE_SUCC)
-                .build();
+                        .setRetcode(RETCODE_SUCC)
+                        .build();
 
         this.setData(proto);
     }

@@ -1,7 +1,6 @@
 package raidengame.connection.packets.send.scene;
 
 // Imports
-import static raidengame.connection.base.PacketRetcodes.RETCODE_SUCC;
 import raidengame.connection.base.BasePacket;
 import raidengame.connection.base.PacketIds;
 
@@ -12,13 +11,13 @@ import raidengame.cache.protobuf.EnterSceneDoneRspOuterClass.EnterSceneDoneRsp;
  * Response from EnterSceneDoneReq.
  */
 public class PacketEnterSceneDoneRsp extends BasePacket {
-    public PacketEnterSceneDoneRsp(int scene_token) {
+    public PacketEnterSceneDoneRsp(int sceneToken, int retcode) {
         super(PacketIds.EnterSceneDoneRsp);
 
         EnterSceneDoneRsp proto =
                 EnterSceneDoneRsp.newBuilder()
-                        .setRetcode(RETCODE_SUCC)
-                        .setEnterSceneToken(scene_token)
+                        .setRetcode(retcode)
+                        .setEnterSceneToken(sceneToken)
                         .build();
 
         this.setData(proto);

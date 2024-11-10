@@ -16,11 +16,11 @@ public class PacketPlayerGameTimeNotify extends BasePacket {
         super(PacketIds.PlayerGameTimeNotify);
 
         PlayerGameTimeNotify proto =
-            PlayerGameTimeNotify.newBuilder()
-                .setUid(player.getUid())
-                .setGameTime((int)player.getWorld().getTotalGameTimeMinutes())
-                .setIsHome(player.getHome() != null)
-                .build();
+                PlayerGameTimeNotify.newBuilder()
+                        .setUid(player.getUid())
+                        .setGameTime((int)player.getWorld().getTotalGameTimeMinutes())
+                        .setIsHome(player.getHome() != null)
+                        .build();
 
         this.setData(proto);
     }
