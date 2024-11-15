@@ -8,7 +8,6 @@ import com.mongodb.lang.Nullable;
 import dev.morphia.annotations.AlsoLoad;
 import dev.morphia.annotations.Entity;
 import lombok.Getter;
-import lombok.Setter;
 
 @Entity @Getter
 public class PlayerProfile {
@@ -48,7 +47,7 @@ public class PlayerProfile {
      * @return Player object.
      */
     @Nullable public Player getPlayer() {
-        var player = Main.getGameServer().getPlayerByUid(this.uid, true);
+        var player = Main.getGameServer().getPlayerByUid(this.uid, false);
         this.syncWithCharacter(player);
         return player;
     }
@@ -61,7 +60,6 @@ public class PlayerProfile {
         /// TODO: Finish synchronization.
 
         if (player == null) {
-            Main.getLogger().info("NOT OK");
             return;
         }
 
@@ -76,7 +74,8 @@ public class PlayerProfile {
         this.isDuelObservable = false;
         this.isChatNoDisturb = player.isChatNoDisturb();
         this.isMultiplayerAvailable = true;
-        this.enterHomeOption = 0;
+        this.enterHomeOption = 1;
+        //this.enterHomeOption = player.tryGetHome().map(GameHome::getEnterHomeOption).orElse(FriendEnterHomeOptionOuterClass.FriendEnterHomeOption.FRIEND_ENTER_HOME_OPTION_REFUSE_VALUE);
         this.updateLastActiveTime();
     }
 

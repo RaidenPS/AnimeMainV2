@@ -20,7 +20,7 @@ public class HandlerSetPlayerSignatureReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         SetPlayerSignatureReq req = SetPlayerSignatureReq.parseFrom(data);
-        String signature = req.getSignature().replace(" ", "");
+        String signature = req.getSignature();
         Player player = session.getPlayer();
 
         if(signature.isEmpty() || WordFilter.checkIsBadWord(signature)) {

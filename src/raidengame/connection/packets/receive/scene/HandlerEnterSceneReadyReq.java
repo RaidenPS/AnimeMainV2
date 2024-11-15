@@ -21,6 +21,7 @@ public class HandlerEnterSceneReadyReq extends Packet {
         EnterSceneReadyReq req = EnterSceneReadyReq.parseFrom(data);
         int sceneToken = req.getEnterSceneToken();
         if(sceneToken != session.getPlayer().getEnterSceneToken()) {
+            session.logPacketRetcode(PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID, "Scene", "EnterSceneReadyRsp (RET_ENTER_SCENE_TOKEN_INVALID)");
             session.send(new PacketEnterSceneReadyRsp(req.getEnterSceneToken(), PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID));
             return;
         }

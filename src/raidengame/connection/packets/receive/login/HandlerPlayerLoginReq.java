@@ -61,7 +61,7 @@ public class HandlerPlayerLoginReq extends Packet {
 
         if(ConfigManager.serverConfig.gameInfo.isBeta) {
             // logging only on beta versions. (fair)
-            GameLog log = new GameLog(session.getPlayer(), req, true);
+            GameLog log = new GameLog(session.getPlayer(), req);
             log.save();
         }
 
@@ -79,8 +79,9 @@ public class HandlerPlayerLoginReq extends Packet {
                 player.addAvatar(avatarId, true, false);
                 player.setNickname("Traveler");
                 player.saveDatabase();
+
+                player.onLogin(true);
             }
-            player.onLogin(true);
         }
         else {
             player.onLogin(false);

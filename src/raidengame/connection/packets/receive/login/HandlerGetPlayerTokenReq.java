@@ -60,15 +60,15 @@ public class HandlerGetPlayerTokenReq extends Packet {
         session.setAccount(account);
         var exists = Main.getGameServer().getPlayerByAccountId(account.getId());
         if (exists != null) {
-            // Another session was found.
             var existsSession = exists.getSession();
             if (existsSession != session) {
                 exists.onLogout();
-                if(session.getState() == SessionState.WAITING_FOR_LOGIN) {
-                    existsSession.send(new PacketGetPlayerTokenRsp(session, PacketRetcodes.RET_WAIT_OTHER_LOGIN, "LoginSessionOnAnotherDevice", req));
+                existsSession.close();
+                if(existsSession.getState() == SessionState.ACTIVE) {
+                    session.send(new PacketGetPlayerTokenRsp(session, PacketRetcodes.RET_WAIT_OTHER_LOGIN, "LoginSessionOnAnotherDevice", req));
                 }
                 else {
-                    existsSession.send(new PacketGetPlayerTokenRsp(session, PacketRetcodes.RET_REPEAT_LOGIN, "LoginDuplication", req));
+                    session.send(new PacketGetPlayerTokenRsp(session, PacketRetcodes.RET_REPEAT_LOGIN, "LoginDuplication", req));
                 }
                 return;
             }

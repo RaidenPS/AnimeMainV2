@@ -1,6 +1,7 @@
 package raidengame.connection.packets.receive.game.chat;
 
 // Imports
+import raidengame.Main;
 import raidengame.connection.GameSession;
 import raidengame.connection.base.*;
 
@@ -17,10 +18,16 @@ public class HandlerPrivateChatReq extends Packet {
         PrivateChatReq req = PrivateChatReq.parseFrom(data);
         PrivateChatReq.ContentCase content = req.getContentCase();
 
-        if (content == PrivateChatReq.ContentCase.TEXT) {
-            session.getServer().getChatSystem().sendPrivateMessage(session.getPlayer(), req.getTargetUid(), req.getText().replace(" ", ""));
-        } else if (content == PrivateChatReq.ContentCase.ICON) {
-            session.getServer().getChatSystem().sendPrivateMessage(session.getPlayer(), req.getTargetUid(), req.getIcon());
+        switch(content) {
+            case PrivateChatReq.ContentCase.TEXT:
+                session.getServer().getChatSystem().sendPrivateMessage(session.getPlayer(), req.getTargetUid(), req.getText());
+                break;
+            case PrivateChatReq.ContentCase.ICON:
+                session.getServer().getChatSystem().sendPrivateMessage(session.getPlayer(), req.getTargetUid(), req.getIcon());
+                break;
+            default:
+                Main.getLogger().warn("[Chat] Unhandled PrivateChatReq content.");
+                break;
         }
     }
 }

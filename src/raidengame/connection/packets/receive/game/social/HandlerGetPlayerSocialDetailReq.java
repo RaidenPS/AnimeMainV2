@@ -12,6 +12,8 @@ import raidengame.connection.packets.send.game.social.PacketGetPlayerSocialDetai
 import raidengame.cache.protobuf.GetPlayerSocialDetailReqOuterClass.GetPlayerSocialDetailReq;
 import raidengame.cache.protobuf.SocialDetailOuterClass.SocialDetail;
 
+import java.util.Objects;
+
 /**
  * Handler for send player's social information.
  */
@@ -20,11 +22,20 @@ public class HandlerGetPlayerSocialDetailReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         GetPlayerSocialDetailReq req = GetPlayerSocialDetailReq.parseFrom(data);
-
         SocialDetail.Builder detail = session.getServer().getSocialInfoByUid(req.getUid());
+        int id = req.getUid();
+        var friendList = session.getPlayer().getFriendsList();
+
         if (detail != null) {
-            detail.setIsFriend(req.getUid() == UID || session.getPlayer().getFriendsList().isFriendsWith(req.getUid()));
-            detail.setIsInBlacklist(req.getUid() == UID || session.getPlayer().getFriendsList().isBlockedWith(req.getUid()));
+            boolean isFriend = friendList.isFriendsWith(id);
+            detail.setIsFriend(id == UID || isFriend);
+            detail.setIsInBlacklist(friendList.isBlockedWith(id));
+            if(isFriend) {
+                String remarkName = friendList.getFriends().get(id).getRemarkName();
+                if(!Objects.equals(remarkName, Objects.requireNonNull(session.getServer().getPlayerByUid(id, true)).getNickname())) {
+                    detail.setRemarkName(friendList.getFriends().get(id).getRemarkName());
+                }
+            }
             session.send(new PacketGetPlayerSocialDetailRsp(detail, PacketRetcodes.RETCODE_SUCC));
         }
         else {

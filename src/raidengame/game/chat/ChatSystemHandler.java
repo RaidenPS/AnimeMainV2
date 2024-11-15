@@ -9,7 +9,7 @@ public interface ChatSystemHandler {
 
     void handlePullRecentChatReq(Player player, int seq, int pull_num);
 
-    void handlePullPrivateChatReq(Player player, int partnerId, int seq, int pull_num);
+    void handlePullPrivateChatReq(Player player, int targetId, int seq, int pull_num);
 
     void sendPrivateMessageFromServer(int targetUid, String message);
 

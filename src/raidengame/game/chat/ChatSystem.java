@@ -1,10 +1,10 @@
 package raidengame.game.chat;
 
 // Imports
-import raidengame.configuration.ConfigManager;
-import raidengame.configuration.GameConstants;
+import raidengame.configuration.*;
 import raidengame.connection.base.PacketRetcodes;
 import raidengame.game.player.Player;
+import raidengame.misc.WordFilter;
 import raidengame.misc.classes.Timestamp;
 import raidengame.server.GameServer;
 import lombok.Getter;
@@ -87,15 +87,6 @@ public class ChatSystem implements ChatSystemHandler {
     }
 
     /**
-     * Gets the chat history from given player with the server account.
-     * @param player The given player.
-     * @return The chat history.
-     */
-    private List<ChatInfo> getChatHistoryWithServer(Player player) {
-        return this.getChatHistory(player, ServerBot.UID);
-    }
-
-    /**
      * Handles the commands.
      * @param sender The sender.
      * @param target The target.
@@ -103,41 +94,72 @@ public class ChatSystem implements ChatSystemHandler {
      */
     private void handleCommand(Player sender, Player target, String rawMessage) {
         if (!Pattern.compile("[/!]").matcher(rawMessage.substring(0, 1)).matches()) {
-            // not a command, skip.
             return;
         }
 
-        /// Todo: Finish handleCommand
+        for (String line : rawMessage.substring(1).split("\n[/!]"))
+            CommandMap.getInstance().invoke(sender, target, line);
     }
 
     /**
      * Pulls the recent chat history.
      * @param player The player.
-     * @param seq The chat sequence.
-     * @param pull_num Total pulls.
+     * @param fromSequence The chat sequence.
+     * @param pullNum Total pulls.
      */
     @Override
-    public void handlePullRecentChatReq(Player player, int seq, int pull_num) {
+    public void handlePullRecentChatReq(Player player, int fromSequence, int pullNum) {
         if(this.isChatHistoryWithServerEmpty(player)) {
             this.sendPrivateMessageFromServer(player.getUid(), GameConstants.welcomeMessage);
         }
 
-        List<ChatInfo> chatHistory = this.getChatHistoryWithServer(player);
-        int chatHistorySize = chatHistory.size();
-        player.sendPacket(new PacketPullRecentChatRsp(chatHistory.subList(Math.max(chatHistorySize - 3, 0), chatHistorySize)));
+        var playerhist = this.history.get(player.getUid());
+        List<ChatInfo> unreadMessages = new ArrayList<>();
+        if(playerhist.isEmpty()) {
+            return;
+        }
+
+        if(pullNum + fromSequence > playerhist.size()) {
+            pullNum = playerhist.size() + fromSequence;
+        }
+
+        int finalPullNum = pullNum;
+        playerhist.forEach((_, chatInfoList) -> {
+            List<ChatInfo> lastUnreadElements = chatInfoList.stream()
+                    .filter(chatInfo -> !chatInfo.getIsRead())
+                    .skip(Math.max(0, chatInfoList.stream().filter(chatInfo -> !chatInfo.getIsRead()).count() - finalPullNum))
+                    .toList();
+
+            unreadMessages.addAll(lastUnreadElements);
+        });
+
+        player.sendPacket(new PacketPullRecentChatRsp(unreadMessages));
     }
 
     /**
      * Pulls the recent private chat history.
      * @param player The player.
-     * @param partnerId The id of the other player.
-     * @param seq The chat sequence.
-     * @param pull_num Total pulls.
+     * @param targetId The id of the other player.
+     * @param fromSequence The chat sequence.
+     * @param pullNum Total pulls.
      */
     @Override
-    public void handlePullPrivateChatReq(Player player, int partnerId, int seq, int pull_num) {
-        var chatHistory = this.history.computeIfAbsent(player.getUid(), _ -> new HashMap<>()).computeIfAbsent(partnerId, _ -> new ArrayList<>());
-        player.sendPacket(new PacketPullPrivateChatRsp(chatHistory));
+    public void handlePullPrivateChatReq(Player player, int targetId, int fromSequence, int pullNum) {
+        if(!player.getFriendsList().isFriendsWith(targetId) && targetId != ServerBot.UID) {
+            player.sendPacket(new PacketPullPrivateChatRsp(null, PacketRetcodes.RET_PRIVATE_CHAT_READ_NOT_FRIEND));
+            return;
+        }
+
+        var chatHistory = this.history.computeIfAbsent(player.getUid(), _ -> new HashMap<>()).computeIfAbsent(targetId, _ -> new ArrayList<>());
+        if(chatHistory.isEmpty()) {
+            return;
+        }
+
+        if (pullNum + fromSequence > chatHistory.size()) {
+            pullNum = chatHistory.size() - fromSequence;
+        }
+
+        player.sendPacket(new PacketPullPrivateChatRsp(chatHistory.subList(fromSequence, fromSequence + pullNum), PacketRetcodes.RETCODE_SUCC));
     }
 
     /**
@@ -185,9 +207,6 @@ public class ChatSystem implements ChatSystemHandler {
     public void sendPrivateMessage(Player player, int targetUid, String message) {
         Player target = this.server.getPlayerByUid(targetUid);
         if(targetUid == ServerBot.UID) {
-            // Handle the commands.
-            this.handleCommand(player, target, message);
-
             // Sends a message.
             ChatInfo msg = this.createChatMessage(player.getUid(), ServerBot.UID, message);
             player.sendPacket(new PacketPrivateChatNotify(msg));
@@ -195,6 +214,9 @@ public class ChatSystem implements ChatSystemHandler {
 
             // response
             player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RETCODE_SUCC));
+
+            // Handle the commands.
+            this.handleCommand(player, target, message);
             return;
         }
 
@@ -204,9 +226,27 @@ public class ChatSystem implements ChatSystemHandler {
             return;
         }
 
+        // the message is too long.
+        if(message.length() > GameConstants.CHAT_MESSAGE_MAX_SIZE) {
+            player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RET_PRIVATE_CHAT_CONTENT_TOO_LONG));
+            return;
+        }
+
         // player is timeout
         if(player.getChatRestrictionTime() > 0) {
             player.sendPacket(new PacketPrivateChatRsp(player.getChatRestrictionTime(), PacketRetcodes.RET_CHAT_FORBIDDEN));
+            return;
+        }
+
+        // they can't chat if they are not friends
+        if(!player.getFriendsList().isFriendsWith(targetUid)) {
+            player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RET_PRIVATE_CHAT_TARGET_IS_NOT_FRIEND));
+            return;
+        }
+
+        // bad word.
+        if(WordFilter.checkIsBadWord(message)) {
+            player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RET_RPIVATE_CHAT_INVALID_CONTENT_TYPE));
             return;
         }
 
@@ -248,9 +288,20 @@ public class ChatSystem implements ChatSystemHandler {
      */
     @Override
     public void sendPrivateMessage(Player player, int targetUid, int icon) {
+        if(targetUid == ServerBot.UID) {
+            player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RET_PRIVATE_CHAT_CONTENT_NOT_SUPPORTED));
+            return;
+        }
+
         Player target = this.server.getPlayerByUid(targetUid);
-        if(target == null || targetUid == ServerBot.UID) {
+        if(target == null) {
             player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RETCODE_FAIL));
+            return;
+        }
+
+        // they can't chat if they are not friends
+        if(!player.getFriendsList().isFriendsWith(targetUid)) {
+            player.sendPacket(new PacketPrivateChatRsp(0, PacketRetcodes.RET_PRIVATE_CHAT_TARGET_IS_NOT_FRIEND));
             return;
         }
 

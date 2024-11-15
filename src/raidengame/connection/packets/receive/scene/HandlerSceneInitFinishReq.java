@@ -11,7 +11,7 @@ import raidengame.connection.packets.send.game.avatar.PacketSyncTeamEntityNotify
 import raidengame.connection.packets.send.game.lua.PacketWindSeedType1Notify;
 import raidengame.connection.packets.send.game.world.PacketHostPlayerNotify;
 import raidengame.connection.packets.send.game.world.PacketPlayerGameTimeNotify;
-import raidengame.connection.packets.send.game.world.PacketPlayerWorldSceneInfoListNotify;
+import raidengame.connection.packets.send.scene.PacketPlayerWorldSceneInfoListNotify;
 import raidengame.connection.packets.send.game.world.PacketWorldDataNotify;
 import raidengame.connection.packets.send.game.world.PacketWorldPlayerInfoNotify;
 import raidengame.connection.packets.send.scene.PacketPlayerEnterSceneInfoNotify;
@@ -40,7 +40,7 @@ public class HandlerSceneInitFinishReq extends Packet {
 
         player.setSceneLoadState(SceneLoadState.INIT);
         if(sceneToken != player.getEnterSceneToken()) {
-            player.setSceneLoadState(SceneLoadState.NONE);
+            session.logPacketRetcode(PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID, "Scene", "SceneInitFinishRsp (RET_ENTER_SCENE_TOKEN_INVALID)");
             session.send(new PacketSceneInitFinishRsp(sceneToken, PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID));
             return;
         }

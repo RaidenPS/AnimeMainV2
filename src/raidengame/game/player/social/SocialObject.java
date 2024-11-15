@@ -1,7 +1,6 @@
 package raidengame.game.player.social;
 
 // Imports
-import raidengame.Main;
 import raidengame.database.DatabaseHelper;
 import raidengame.enums.FriendOnlineState;
 import raidengame.enums.player.PlatformType;
@@ -14,6 +13,7 @@ import org.bson.types.ObjectId;
 // Protocol buffers
 import raidengame.cache.protobuf.FriendBriefOuterClass.FriendBrief;
 import raidengame.cache.protobuf.ProfilePictureOuterClass.ProfilePicture;
+import raidengame.misc.classes.Timestamp;
 
 @Entity(value = "friendships", useDiscriminator = false)
 public class SocialObject {
@@ -37,7 +37,7 @@ public class SocialObject {
         this.setOwner(owner);
         this.ownerId = owner.getUid();
         this.friendId = friend.getUid();
-        this.remarkName = friend.getNickname();
+        this.remarkName = ""; // friend.getNickname();
         this.friendProfile = friend.getPlayerProfile();
         this.askerId = asker.getUid();
     }
@@ -59,10 +59,24 @@ public class SocialObject {
     }
 
     /**
-     * Creates an protobuf object of FriendBrief.
-     * @return FriendBrief protobuf object
+     * Saves a friendship.
+     */
+    public void saveDatabase() {
+        DatabaseHelper.saveFriendship(this);
+    }
+
+    /**
+     * Deletes a friendship.
+     */
+    public void deleteDatabase() {
+        DatabaseHelper.deleteFriendship(this);
+    }
+
+    /**
+     * Returns a protobuf object of FriendBrief.
      */
     public FriendBrief toProto() {
+        /// TODO: Enter home option
         Player player = this.friendProfile.getPlayer();
 
         FriendBrief.Builder builder =
@@ -75,27 +89,19 @@ public class SocialObject {
                         .setIsChatNoDisturb(this.friendProfile.isChatNoDisturb())
                         .setIsInDuel(this.friendProfile.isInDuel())
                         .setIsDuelObservable(this.friendProfile.isDuelObservable())
-                        .setIsGameSource(true) /// todo check
-                        .setParam(1)
+                        .setIsGameSource(true)
+                        .setLastActiveTime(this.friendProfile.getLastActiveTime())
+                        .setParam((Timestamp.getCurrentSeconds() - this.friendProfile.getLastActiveTime()) / 86400)
                         .setLevel(this.friendProfile.getPlayerLevel())
                         .setWorldLevel(this.friendProfile.getWorldLevel())
-                        .setIsMpModeAvailable(true)
+                        .setIsMpModeAvailable(this.friendProfile.isMultiplayerAvailable())
                         .setNameCardId(this.friendProfile.getNameCard())
                         .setOnlineState(this.isOnline() ? FriendOnlineState.ONLINE.getValue() : FriendOnlineState.OFFLINE.getValue())
-                        .setFriendEnterHomeOption(0);
+                        .setFriendEnterHomeOption(1); // this.getHome() == null ? 0 : this.getHome().getEnterHomeOption()
 
         if(player != null) {
             builder.setPlatformType(player.getPlatform().getValue()).setOnlineId(player.getOnlineId()).setIsPsnSource(player.getPlatform() == PlatformType.PS4 || player.getPlatform() == PlatformType.PS5);
         }
-
         return builder.build();
-    }
-
-    public void saveDatabase() {
-        DatabaseHelper.saveFriendship(this);
-    }
-
-    public void delete() {
-        DatabaseHelper.deleteFriendship(this);
     }
 }

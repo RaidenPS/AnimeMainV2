@@ -61,9 +61,9 @@ public class HandlerSetPlayerBornDataReq extends Packet {
             player.addAvatar(req.getAvatarId(), true, false);
             player.saveDatabase();
 
-            session.getPlayer().setSceneId(3);
+            player.setSceneId(3);
             session.send(new PacketSetPlayerBornDataRsp(PacketRetcodes.RETCODE_SUCC));
-            session.getPlayer().onLogin(true);
+            player.onLogin(true);
         }
         else {
             session.getAccount().setSuspended(true);

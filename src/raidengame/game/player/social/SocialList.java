@@ -22,11 +22,14 @@ import raidengame.connection.packets.send.game.social.PacketDeleteFriendNotify;
 import raidengame.connection.packets.send.game.social.PacketDeleteFriendRsp;
 import raidengame.connection.packets.send.game.social.PacketRemoveBlacklistRsp;
 
+import java.util.List;
+
 public class SocialList extends BasePlayerManager {
     @Getter private final Int2ObjectMap<SocialObject> friends;
     @Getter private final Int2ObjectMap<SocialObject> pendingFriends;
     @Getter private final Int2ObjectMap<SocialObject> blockedPeople;
-    private boolean loadDB = false;
+    @Getter private boolean loaded = false;
+    private boolean isShownFriendRequestNotification = false;
 
     /**
      * Creates a new instance of SocialList.
@@ -38,6 +41,47 @@ public class SocialList extends BasePlayerManager {
         this.friends = new Int2ObjectOpenHashMap<>();
         this.pendingFriends = new Int2ObjectOpenHashMap<>();
         this.blockedPeople = new Int2ObjectOpenHashMap<>();
+    }
+
+    /**
+     * Loads the social list. (Friend list, block list and friend requests).
+     */
+    public synchronized void loadFromDatabase() {
+        if(this.loaded) return;
+        List<SocialObject> friendships = DatabaseHelper.getFriendship(player);
+        for(SocialObject friendship : friendships) {
+            friendship.setOwner(this.player);
+
+            // Sets the friend online.
+            Player friend = getPlayer().getSession().getServer().getPlayerByUid(friendship.getFriendProfile().getUid());
+            if (friend != null) {
+                friendship.setProfile(friend);
+                if (friend.getFriendsList().isLoaded()) {
+                    SocialObject theirFriendship = friend.getFriendsList().getFriendById(getPlayer().getUid());
+                    if (theirFriendship != null) {
+                        theirFriendship.setProfile(getPlayer());
+                    } else {
+                        // not anymore friend.
+                        friendship.deleteDatabase();
+                        return;
+                    }
+                }
+            }
+
+            if(friendship.isFriend()) {
+                this.friends.put(friendship.getFriendId(), friendship);
+            }
+            else if(friendship.isBlocked()) {
+                this.blockedPeople.put(friendship.getFriendId(), friendship);
+            }
+            else {
+                this.pendingFriends.put(friendship.getFriendId(), friendship);
+                if (!this.isShownFriendRequestNotification) {
+                    this.player.getSession().send(new PacketAskAddFriendNotify(friendship));
+                    this.isShownFriendRequestNotification = true;
+                }
+            }
+        }
     }
 
     /**
@@ -158,19 +202,19 @@ public class SocialList extends BasePlayerManager {
             return;
         }
 
-        if(this.getTotalFriends() > GameConstants.friendsMax) {
+        if(this.getTotalFriends() > GameConstants.FRIENDS_MAX_SIZE) {
             // You have maximum friends.
             this.player.sendPacket(new PacketAskAddFriendRsp(targetUid, PacketRetcodes.RET_FRIEND_COUNT_EXCEEDED));
             return;
         }
 
-        if(target.getFriendsList().getTotalFriends() > GameConstants.friendsMax) {
+        if(target.getFriendsList().getTotalFriends() > GameConstants.FRIENDS_MAX_SIZE) {
             // The target has maximum friends.
             this.player.sendPacket(new PacketAskAddFriendRsp(targetUid, PacketRetcodes.RET_TARGET_FRIEND_COUNT_EXCEED));
             return;
         }
 
-        if(target.getFriendsList().getTotalPendingFriends() > GameConstants.friendRequestsMax || this.getTotalPendingFriends() > GameConstants.friendRequestsMax) {
+        if(target.getFriendsList().getTotalPendingFriends() > GameConstants.FRIEND_REQUESTS_MAX_SIZE || this.getTotalPendingFriends() > GameConstants.FRIEND_REQUESTS_MAX_SIZE) {
             // The target has max friend requests.
             this.player.sendPacket(new PacketAskAddFriendRsp(targetUid, PacketRetcodes.RET_ASK_FRIEND_LIST_FULL));
             return;
@@ -179,7 +223,7 @@ public class SocialList extends BasePlayerManager {
         SocialObject myFriendship = new SocialObject(this.player, target, this.player);
         SocialObject theirFriendship = new SocialObject(target, this.player, this.player);
         this.pendingFriends.put(myFriendship.getFriendId(), myFriendship);
-        if (target.isOnline() && target.getFriendsList().loadDB) {
+        if (target.isOnline() && target.getFriendsList().isLoaded()) {
             target.getFriendsList().getPendingFriends().put(theirFriendship.getFriendId(), theirFriendship);
             target.sendPacket(new PacketAskAddFriendNotify(theirFriendship));
         }
@@ -198,15 +242,15 @@ public class SocialList extends BasePlayerManager {
     public synchronized void handleFriendRequest(int targetUid, DealAddFriendResultType result) {
         SocialObject myFriendship = this.getPendingFriendById(targetUid);
         Player target = this.player.getSession().getServer().getPlayerByUid(targetUid, true);
-        if(this.isFriendsWith(targetUid) || myFriendship == null || target == null) { //  myFriendship.getAskerId() == this.player.getUid()
+        if(this.isFriendsWith(targetUid) || myFriendship == null || target == null || myFriendship.getAskerId() == this.player.getUid()) {
             this.player.sendPacket(new PacketDealAddFriendRsp(targetUid, result, PacketRetcodes.RET_PLAYER_NOT_ASK_FRIEND));
             return;
         }
 
         SocialObject theirFriendship = (target.isOnline()) ? target.getFriendsList().getPendingFriendById(this.getPlayer().getUid()) : DatabaseHelper.getReverseFriendship(myFriendship);
         if (theirFriendship == null) {
-            this.pendingFriends.remove(myFriendship.getOwnerId());
-            myFriendship.delete();
+            this.pendingFriends.remove(targetUid);
+            myFriendship.deleteDatabase();
             this.player.sendPacket(new PacketDealAddFriendRsp(targetUid, result, PacketRetcodes.RET_PLAYER_NOT_ASK_FRIEND));
             return;
         }
@@ -216,11 +260,11 @@ public class SocialList extends BasePlayerManager {
                 myFriendship.setFriend(true);
                 theirFriendship.setFriend(true);
 
-                this.pendingFriends.remove(myFriendship.getOwnerId());
+                this.pendingFriends.remove(targetUid);
                 this.friends.put(myFriendship.getFriendId(), myFriendship);
 
                 if (target.isOnline()) {
-                    target.getFriendsList().pendingFriends.remove(this.getPlayer().getUid());
+                    target.getFriendsList().pendingFriends.remove(this.player.getUid());
                     target.getFriendsList().friends.put(theirFriendship.getFriendId(), theirFriendship);
                 }
 
@@ -228,13 +272,13 @@ public class SocialList extends BasePlayerManager {
                 theirFriendship.saveDatabase();
                 break;
             case DealAddFriendResultType.REJECT:
-                this.pendingFriends.remove(myFriendship.getOwnerId());
-                myFriendship.delete();
+                this.pendingFriends.remove(targetUid);
+                myFriendship.deleteDatabase();
 
                 if (target.isOnline()) {
                     theirFriendship = target.getFriendsList().getPendingFriendById(this.getPlayer().getUid());
                 }
-                theirFriendship.delete();
+                theirFriendship.deleteDatabase();
                 break;
             default:
                 Main.getLogger().warn("[SocialList] Unhandled deal friends result: " + result);
@@ -256,7 +300,7 @@ public class SocialList extends BasePlayerManager {
         }
 
         this.friends.remove(targetUid);
-        myFriendship.delete();
+        myFriendship.deleteDatabase();
 
         SocialObject theirFriendship;
         Player friend = myFriendship.getFriendProfile().getPlayer();
@@ -264,13 +308,13 @@ public class SocialList extends BasePlayerManager {
             theirFriendship = friend.getFriendsList().getFriendById(this.player.getUid());
             if (theirFriendship != null) {
                 friend.getFriendsList().getFriends().remove(theirFriendship.getFriendId());
-                theirFriendship.delete();
+                theirFriendship.deleteDatabase();
                 friend.sendPacket(new PacketDeleteFriendNotify(theirFriendship.getFriendId()));
             }
         } else {
             theirFriendship = DatabaseHelper.getReverseFriendship(myFriendship);
             if (theirFriendship != null) {
-                theirFriendship.delete();
+                theirFriendship.deleteDatabase();
             }
         }
         this.player.sendPacket(new PacketDeleteFriendRsp(targetUid, PacketRetcodes.RETCODE_SUCC));
@@ -282,7 +326,7 @@ public class SocialList extends BasePlayerManager {
      */
     public synchronized void handlerAddBlockedPlayer(int targetUid) {
         Player target = this.player.getServer().getPlayerByUid(targetUid, true);
-        if(target == null || targetUid == ServerBot.UID) {
+        if(target == null || targetUid == ServerBot.UID || this.isPendingFriendsWith(targetUid)) {
             // player not found
             this.player.sendPacket(new PacketAddBlacklistRsp(ServerBot.getFriendObject(), PacketRetcodes.RET_PLAYER_NOT_EXIST));
             return;
@@ -294,7 +338,7 @@ public class SocialList extends BasePlayerManager {
             return;
         }
 
-        if(this.getTotalBlockedPlayers() > GameConstants.blockedsMax) {
+        if(this.getTotalBlockedPlayers() > GameConstants.BLOCK_LIST_MAX_SIZE) {
             // reached maximum blocked people
             this.player.sendPacket(new PacketAddBlacklistRsp(ServerBot.getFriendObject(), PacketRetcodes.RET_PLAYER_BLACKLIST_FULL));
             return;
@@ -323,20 +367,20 @@ public class SocialList extends BasePlayerManager {
             if (theirFriendship != null) {
                 // he is your friend, remove him.
                 friend.getFriendsList().getFriends().remove(theirFriendship.getFriendId());
-                theirFriendship.delete();
+                theirFriendship.deleteDatabase();
                 friend.sendPacket(new PacketDeleteFriendNotify(theirFriendship.getFriendId()));
             }
             else {
                 theirFriendship = DatabaseHelper.getReverseFriendship(myFriendship);
                 if (theirFriendship != null) {
-                    theirFriendship.delete();
+                    theirFriendship.deleteDatabase();
                 }
             }
         }
         else {
             theirFriendship = DatabaseHelper.getReverseFriendship(myFriendship);
             if (theirFriendship != null) {
-                theirFriendship.delete();
+                theirFriendship.deleteDatabase();
             }
         }
 
@@ -357,7 +401,7 @@ public class SocialList extends BasePlayerManager {
         }
 
         this.blockedPeople.remove(targetUid);
-        myFriendship.delete();
+        myFriendship.deleteDatabase();
 
         this.player.sendPacket(new PacketRemoveBlacklistRsp(targetUid, PacketRetcodes.RETCODE_SUCC));
     }

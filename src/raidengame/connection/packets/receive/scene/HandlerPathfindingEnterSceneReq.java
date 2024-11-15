@@ -18,13 +18,9 @@ public class HandlerPathfindingEnterSceneReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         PathfindingEnterSceneReq req = PathfindingEnterSceneReq.parseFrom(data);
-        if(session.getPlayer() == null) {
-            session.send(new PacketPathfindingEnterSceneRsp(PacketRetcodes.RET_TOTHEMOON_PLAYER_NOT_EXIST));
-            return;
-        }
-
-        if(req.getSceneId() != session.getPlayer().getSceneId()) {
-            session.send(new PacketPathfindingEnterSceneRsp(PacketRetcodes.RET_TOTHEMOON_ERROR_SCENE));
+        var player = session.getPlayer();
+        if(player == null || req.getSceneId() != player.getSceneId()) {
+            session.send(new PacketPathfindingEnterSceneRsp(PacketRetcodes.RET_PATHFINDING_ERROR_SCENE));
             return;
         }
 

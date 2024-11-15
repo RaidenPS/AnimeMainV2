@@ -49,8 +49,8 @@ public class HandlerSetFriendRemarkNameReq extends Packet {
             return;
         }
 
-        session.getPlayer().getFriendsList().getFriendById(req.getUid()).setRemarkName(name);
-        session.getPlayer().getFriendsList().save();
-        session.send(new PacketSetFriendRemarkNameRsp(req.getUid(), name, PacketRetcodes.RETCODE_SUCC));
+        session.getPlayer().getFriendsList().getFriendById(uid).setRemarkName(name);
+        session.getPlayer().getFriendsList().getFriendById(uid).saveDatabase();
+        session.send(new PacketSetFriendRemarkNameRsp(uid, name, PacketRetcodes.RETCODE_SUCC));
     }
 }

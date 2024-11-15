@@ -101,6 +101,7 @@ public class Account {
     public boolean hasPermission(String permission) {
         if (this.permissions == null) return false;
         if (this.permissions.contains("*") && this.permissions.size() == 1) return true;
+        if (permission.isEmpty()) return true;
 
         return permissions.contains(permission);
     }

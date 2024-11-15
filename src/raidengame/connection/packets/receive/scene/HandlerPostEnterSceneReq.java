@@ -20,6 +20,7 @@ public class HandlerPostEnterSceneReq extends Packet {
         PostEnterSceneReq req = PostEnterSceneReq.parseFrom(data);
         int sceneToken = req.getEnterSceneToken();
         if(sceneToken != session.getPlayer().getEnterSceneToken()) {
+            session.logPacketRetcode(PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID, "Scene", "PostEnterSceneRsp (RET_ENTER_SCENE_TOKEN_INVALID)");
             session.send(new PacketPostEnterSceneRsp(sceneToken, PacketRetcodes.RET_ENTER_SCENE_TOKEN_INVALID));
             return;
         }

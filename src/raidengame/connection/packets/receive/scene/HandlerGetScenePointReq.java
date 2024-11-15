@@ -18,6 +18,6 @@ public class HandlerGetScenePointReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         GetScenePointReq req = GetScenePointReq.parseFrom(data);
-        session.send(new PacketGetScenePointRsp(req.getSceneId(), req.getIsNewPlayer()));
+        session.send(new PacketGetScenePointRsp(session.getPlayer(), req.getSceneId(), req.getIsNewPlayer()));
     }
 }
