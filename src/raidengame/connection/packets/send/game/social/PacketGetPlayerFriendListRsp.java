@@ -3,8 +3,6 @@ package raidengame.connection.packets.send.game.social;
 // Imports
 import static raidengame.connection.base.PacketRetcodes.RETCODE_SUCC;
 import static raidengame.game.chat.ServerBot.getFriendObject;
-
-import raidengame.Main;
 import raidengame.connection.base.BasePacket;
 import raidengame.connection.base.PacketIds;
 import raidengame.game.player.Player;

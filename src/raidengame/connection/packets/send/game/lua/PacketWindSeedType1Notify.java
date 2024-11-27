@@ -12,7 +12,7 @@ import java.io.IOException;
 import raidengame.cache.protobuf.WindSeedType1NotifyOuterClass.WindSeedType1Notify;
 
 /**
- * Packet to execute lua script on Level 1.
+ * Packet to execute lua script on Level 1 (normal).
  */
 public class PacketWindSeedType1Notify extends BasePacket {
     public PacketWindSeedType1Notify(String luaFile) {

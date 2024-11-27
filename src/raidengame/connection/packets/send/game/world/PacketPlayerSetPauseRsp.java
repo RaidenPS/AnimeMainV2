@@ -16,8 +16,8 @@ public class PacketPlayerSetPauseRsp extends BasePacket {
 
         PlayerSetPauseRsp proto =
                 PlayerSetPauseRsp.newBuilder()
-                    .setRetcode(retcode)
-                    .build();
+                        .setRetcode(retcode)
+                        .build();
 
         this.setData(proto);
     }

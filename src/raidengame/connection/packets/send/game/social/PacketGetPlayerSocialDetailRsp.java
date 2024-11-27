@@ -18,7 +18,7 @@ public class PacketGetPlayerSocialDetailRsp extends BasePacket {
 
         GetPlayerSocialDetailRsp proto;
         if(retcode == RETCODE_SUCC) {
-            proto = GetPlayerSocialDetailRsp.newBuilder().setRetcode(retcode).setDetailData(detail).build();
+            proto = GetPlayerSocialDetailRsp.newBuilder().setRetcode(retcode).setDetailData(detail.build()).build();
         }
         else {
             proto = GetPlayerSocialDetailRsp.newBuilder().setRetcode(retcode).build();

@@ -83,7 +83,7 @@ public class PacketPlayerLoginRsp extends BasePacket {
                     .setLoginRand(req.getLoginRand())
                     .setIsScOpen(true)
                     .setScInfo(ByteString.copyFrom(new byte[] {}))
-                    .setIsEnableClientHashDebug(true)
+                    .setIsUseAbilityHash(true)
                     .setAbilityHashCode(1844674)
                     .setClientDataVersion(regionInfo.getClientDataVersion())
                     .setClientMd5(regionInfo.getClientDataMd5())

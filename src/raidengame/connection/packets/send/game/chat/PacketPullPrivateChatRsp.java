@@ -12,13 +12,13 @@ import raidengame.cache.protobuf.PullPrivateChatRspOuterClass.PullPrivateChatRsp
  * Packet to send response from PullPrivateChatReq.
  */
 public class PacketPullPrivateChatRsp extends BasePacket {
-    public PacketPullPrivateChatRsp(List<ChatInfo> history) {
+    public PacketPullPrivateChatRsp(List<ChatInfo> history, int retcode) {
         super(PacketIds.PullPrivateChatRsp);
 
         PullPrivateChatRsp proto =
                 PullPrivateChatRsp.newBuilder()
-                        .setRetcode((history == null) ? PacketRetcodes.RETCODE_FAIL : PacketRetcodes.RETCODE_SUCC)
-                        .addAllChatInfo(history)
+                        .setRetcode(retcode)
+                        .addAllChatInfo((history == null) ? List.of() : history)
                         .build();
 
         this.setData(proto);

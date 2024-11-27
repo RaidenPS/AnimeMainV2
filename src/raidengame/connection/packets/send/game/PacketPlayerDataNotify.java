@@ -7,6 +7,7 @@ import raidengame.game.player.Player;
 
 // Protocol buffers
 import raidengame.cache.protobuf.PlayerDataNotifyOuterClass.PlayerDataNotify;
+import raidengame.cache.protobuf.PropValueOuterClass.PropValue;
 
 /**
  * Packet for send player's nickname in the game world.
@@ -22,6 +23,7 @@ public class PacketPlayerDataNotify extends BasePacket {
                         .setRegionId(player.getRegionId())
                         .setIsFirstLoginToday(true);
 
+        player.getProperties().forEach((key, value) -> {proto.putPropMap(key, PropValue.newBuilder().setType(key).setIval(value).setVal(value).build());});
         this.setData(proto.build());
     }
 }

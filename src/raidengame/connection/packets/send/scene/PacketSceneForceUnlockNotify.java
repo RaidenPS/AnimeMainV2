@@ -12,6 +12,9 @@ import raidengame.cache.protobuf.SceneForceUnlockNotifyOuterClass.SceneForceUnlo
  * Packet to send forcefully unlock a scene.
  */
 public class PacketSceneForceUnlockNotify extends BasePacket {
+    /**
+     * Init packet.
+     */
     public PacketSceneForceUnlockNotify() {
         super(PacketIds.SceneForceUnlockNotify);
 
@@ -19,26 +22,36 @@ public class PacketSceneForceUnlockNotify extends BasePacket {
         this.setData(proto);
     }
 
+    /**
+     * Unlocks a new scene by given scene ids.
+     * @param unlocked The scenes.
+     * @param isAdd should unlock.
+     */
     public PacketSceneForceUnlockNotify(Collection<Integer> unlocked, boolean isAdd) {
         super(PacketIds.SceneForceUnlockNotify);
 
         SceneForceUnlockNotify proto =
-            SceneForceUnlockNotify.newBuilder()
-                .addAllForceIdList(unlocked)
-                .setIsAdd(isAdd)
-                .build();
+                SceneForceUnlockNotify.newBuilder()
+                        .addAllForceIdList(unlocked)
+                        .setIsAdd(isAdd)
+                        .build();
 
         this.setData(proto);
     }
 
+    /**
+     * Unlocks a specific scene.
+     * @param unlocked The scene.
+     * @param isAdd should unlock.
+     */
     public PacketSceneForceUnlockNotify(int unlocked, boolean isAdd) {
         super(PacketIds.SceneForceUnlockNotify);
 
         SceneForceUnlockNotify proto =
-            SceneForceUnlockNotify.newBuilder()
-                .addForceIdList(unlocked)
-                .setIsAdd(isAdd)
-                .build();
+                SceneForceUnlockNotify.newBuilder()
+                        .addForceIdList(unlocked)
+                        .setIsAdd(isAdd)
+                        .build();
 
         this.setData(proto);
     }
