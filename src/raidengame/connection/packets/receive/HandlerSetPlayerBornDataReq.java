@@ -59,9 +59,9 @@ public class HandlerSetPlayerBornDataReq extends Packet {
             Player player = session.getPlayer();
             player.setNickname(req.getNickname());
             player.addAvatar(req.getAvatarId(), true, false);
-            player.saveDatabase();
-
             player.setSceneId(3);
+            player.getTeamManager().getCurrentSinglePlayerTeamInfo().getAvatars().add(req.getAvatarId());
+
             session.send(new PacketSetPlayerBornDataRsp(PacketRetcodes.RETCODE_SUCC));
             player.onLogin(true);
         }

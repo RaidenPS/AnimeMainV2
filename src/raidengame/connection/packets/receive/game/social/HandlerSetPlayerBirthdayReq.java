@@ -44,6 +44,7 @@ public class HandlerSetPlayerBirthdayReq extends Packet {
 
         player.setBirthday(day, month);
         player.updateProfile();
+        player.saveDatabase();
         session.send(new PacketSetPlayerBirthdayRsp(player, PacketRetcodes.RETCODE_SUCC));
     }
 }

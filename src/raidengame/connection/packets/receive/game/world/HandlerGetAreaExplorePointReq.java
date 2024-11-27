@@ -18,6 +18,6 @@ public class HandlerGetAreaExplorePointReq extends Packet {
     @Override
     public void handle(GameSession session, byte[] header, byte[] data) throws Exception {
         GetAreaExplorePointReq req = GetAreaExplorePointReq.parseFrom(data);
-        session.send(new PacketGetAreaExplorePointRsp(session.getPlayer(), req.getAreaIdListList()));
+        session.send(new PacketGetAreaExplorePointRsp(req.getAreaIdListList()));
     }
 }

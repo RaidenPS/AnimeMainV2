@@ -24,7 +24,7 @@ public class HandlerSetFriendRemarkNameReq extends Packet {
         String name = req.getRemarkName();
         int uid = req.getUid();
 
-        if(uid == ServerBot.UID) {
+        if(uid == ServerBot.UID || !session.getPlayer().getFriendsList().isFriendsWith(uid)) {
             session.send(new PacketSetFriendRemarkNameRsp(uid, name, PacketRetcodes.RETCODE_FAIL));
             return;
         }

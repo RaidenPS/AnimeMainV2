@@ -77,6 +77,7 @@ public class HandlerPlayerLoginReq extends Packet {
             else {
                 int avatarId = (Randomizer.randomRange(1, 2) == 2) ? GameConstants.MAIN_CHARACTER_MALE : GameConstants.MAIN_CHARACTER_FEMALE;
                 player.addAvatar(avatarId, true, false);
+                player.getTeamManager().getCurrentSinglePlayerTeamInfo().getAvatars().add(avatarId);
                 player.setNickname("Traveler");
                 player.saveDatabase();
 
